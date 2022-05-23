@@ -1,0 +1,2 @@
+Introdução: Este projeto trata-se da implementação do Exercício
+Programa 02 da disciplina MAC0420. 
