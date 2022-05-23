@@ -20,6 +20,17 @@
  var gCanvas;
  var gShader = {};  // encapsula globais do shader
  
+ // cria a matriz de projeção - pode ser feita uma única vez
+ var projection = mat4(
+   1, 0, 0, 0,
+   0, 1, 0, 0,
+   0, 0, 1, 0,
+   0, 0, 0, 1
+ );
+ 
+ var colorBufTris;
+ var bufPosTris;
+
  // Os códigos fonte dos shaders serão descritos em 
  // strings para serem compilados e passados a GPU
  var gVertexShaderSrc;
@@ -34,6 +45,8 @@
 
  var gCoresTris = [];
  var gPosicoesTris = [];
+
+ var directionKey;
  
  // ==================================================================
  // chama a main quando terminar de carregar a janela
@@ -50,7 +63,7 @@
   console.log("Canvas: ", gCanvas.width, gCanvas.height);
 
   //gTris.push(new Triangle(50, 50, 100, 25, 95, 25, 25, sorteieCorRGBA(), false));
-  gTris.push(new Triangle(0.5, 0.5, 0.5, 0.5, 95, 0.2, 0.2, sorteieCorRGBA(), false));
+  gTris.push(new Triangle(0.5, 0.5, 0.5, 0.5, 95, 0.15, 0.15, sorteieCorRGBA(), false));
 
   // shaders
   crieShaders();
@@ -76,19 +89,33 @@ function callbackKeyUp(e) {
   switch (keyName) {
       case 'ArrowRight': 
           console.log('Move para a direita.');
+          directionKey  = 'r';
           break;
 
       case 'ArrowLeft':
           console.log('Move para a esquerda.');
+          directionKey  = 'l';
           break;
 
       case 'ArrowDown':
           console.log('Move para baixo.');
+          directionKey  = 'd';
           break;
 
       case 'ArrowUp':
-        console.log('Move para cima.');
-        break;
+          console.log('Move para cima.');
+          directionKey  = 'u';
+          break;
+      
+      case '+':
+          console.log('Cria peixe');
+          directionKey = keyName;
+          break;
+
+      case 'p':
+          console.log('Pause');
+          directionKey = 'p';
+          break;
   }
 
 }
@@ -106,7 +133,7 @@ function callbackKeyUp(e) {
    gl.bindVertexArray(gShader.trisVAO);
  
    // carrega dados dos quads
-   var bufPosTris = gl.createBuffer();
+   bufPosTris = gl.createBuffer();
    gl.bindBuffer(gl.ARRAY_BUFFER, bufPosTris);
    gl.bufferData(gl.ARRAY_BUFFER, flatten(gPosicoesTris), gl.STATIC_DRAW);
  
@@ -116,7 +143,7 @@ function callbackKeyUp(e) {
    gl.enableVertexAttribArray(aPosTris);
 
    // buffer de cores
-   var colorBufTris = gl.createBuffer();
+   colorBufTris = gl.createBuffer();
    gl.bindBuffer(gl.ARRAY_BUFFER, colorBufTris);
    gl.bufferData(gl.ARRAY_BUFFER, flatten(gCoresTris), gl.STATIC_DRAW);
    var aColorTris = gl.getAttribLocation(gShader.program, "aColor");
@@ -135,6 +162,29 @@ function callbackKeyUp(e) {
   */
  function desenhe() {
    // atualiza o relógio
+   if(directionKey == '+') {
+    //gTris.push(new Triangle(50, 50, 100, 25, 95, 25, 25, sorteieCorRGBA(), false));
+    gTris.push(new Triangle(0.1, 0.3, 0.5, 0.5, 95, 0.15, 0.15, sorteieCorRGBA(), false));
+     // carrega buffer
+     gl.bindBuffer(gl.ARRAY_BUFFER, bufPosTris);
+     gl.bufferData(gl.ARRAY_BUFFER, flatten(gPosicoesTris), gl.STATIC_DRAW);
+     // habilita atributos
+     var aPosTris = gl.getAttribLocation(gShader.program, "aPosition");
+     gl.vertexAttribPointer(aPosTris, 2, gl.FLOAT, false, 0, 0);
+     gl.enableVertexAttribArray(aPosTris);
+     //  buffer de cores
+     gl.bindBuffer(gl.ARRAY_BUFFER, bufPosTris);
+     gl.bufferData(gl.ARRAY_BUFFER, flatten(gCoresTris), gl.STATIC_DRAW);
+     var aColorTris = gl.getAttribLocation(gShader.program, "aColor");
+     gl.vertexAttribPointer(aColorTris, 4, gl.FLOAT, false, 0, 0);
+     gl.enableVertexAttribArray(aColorTris);
+
+     // resolve os uniforms
+     gShader.uMatrix = gl.getUniformLocation(gShader.program, "uMatrix");
+     gl.bindVertexArray(null); // apenas boa prática
+
+     console.log("CRIADO");
+   }
    let now = Date.now();
    let delta = (now - gUltimoT) / 1000;
    gUltimoT = now;
@@ -142,24 +192,13 @@ function callbackKeyUp(e) {
    // limpa o canvas
    gl.clear(gl.COLOR_BUFFER_BIT);
  
-   // cria a matriz de projeção - pode ser feita uma única vez
-   let w = gCanvas.width;
-   let h = gCanvas.height;
-  //  let projection = mat4(
-  //    2 / w, 0, 0, -1,
-  //    0, -2 / h, 0, 1,
-  //    0, 0, 1, 0,
-  //    0, 0, 0, 1
-  //  );
-  let projection = mat4(
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1
-  );
- 
    desenheTris(delta, projection);
-   window.requestAnimationFrame(desenhe);
+   if(directionKey != 'p') {
+    //console.log('aa')
+    window.requestAnimationFrame(desenhe);
+   }
+   else 
+    console.log("PAUSA");
  
  }
 
@@ -232,11 +271,12 @@ function callbackKeyUp(e) {
   * @param {Boolean} - solido ou colorido
   */
   function Triangle(x, y, vx, vy, vrz, sx, sy, cor, colorido = true) {
-    this.vertices = [  // quadrado de lado 1
-      vec2(0.5, 0.0),
+    this.vertices = [  
+      vec2(1.0, 0.0),
       vec2(-0.5, 0.5),
       vec2(-0.5, -0.5)
     ];
+
     this.nv = this.vertices.length;
     this.pos = vec2(x, y);
     this.vel = vec2(vx, vy);
@@ -258,10 +298,14 @@ function callbackKeyUp(e) {
     gCoresTris.push(cor);
     gCoresTris.push(cor);
     gCoresTris.push(cor);
-
   
   };
 
+ function velEscalar(vx, vy) {
+   let angle = Math.atan2(vy,vx);
+   let s = vx/Math.cos(angle);
+   return s;
+ }
 
  /**
   * atualiza a posição dos vertices de um objeto
@@ -275,19 +319,62 @@ function callbackKeyUp(e) {
    [x, y] = obj.pos;
    [vx, vy] = obj.vel;
    //obj.theta = (obj.theta + obj.vrz * delta) % (360);
-   obj.theta = Math.atan2(vx,vy) * 180/Math.PI;
    //console.log("Rot: ", obj.theta);
  
-  //  // bateu? Altere o trecho abaixo para considerar o raio!
-  //  if (x < 0) { x = -x; vx = -vx; obj.vrz *= -1 };
-  //  if (y < 0) { y = -y; vy = -vy; obj.vrz *= -1 };
-  //  if (x >= gCanvas.width) { x = gCanvas.width; vx = -vx; obj.vrz *= -1 };
-  //  if (y >= gCanvas.height) { y = gCanvas.height; vy = -vy; obj.vrz *= -1 };
-
    if (x < -1) { x = -1; vx = -vx; obj.vrz *= -1 };
    if (y < -1) { y = -1; vy = -vy; obj.vrz *= -1 };
    if (x >= 1) { x = 1; vx = -vx; obj.vrz *= -1 };
    if (y >= 1) { y = 1; vy = -vy; obj.vrz *= -1 };
+
+   obj.theta = Math.atan2(vy,vx) * 180/Math.PI;
+
+   let s;
+
+   if(directionKey != '') {
+     switch(directionKey) {
+       case 'u':
+         vy += (0.1)*vy;
+         vx += (0.1)*vx;
+
+     directionKey = '';
+         break;
+
+       case 'd':
+         vy -= (0.1)*vy;
+         vx -= (0.1)*vx;
+         directionKey = '';
+         break;
+
+       case 'l': 
+        s = velEscalar(vx, vy);
+        obj.theta = obj.theta + 10;
+        vx = s*Math.cos(obj.theta *Math.PI/180);
+        vy = s*Math.sin(obj.theta *Math.PI/180); 
+        //console.log('Vel:', vx, vy);
+        //console.log('Theta:', obj.theta);
+        directionKey = '';
+         break;
+
+       case 'r':
+        s = velEscalar(vx, vy);
+        obj.theta = obj.theta - 10; 
+        vx = s*Math.cos(obj.theta *Math.PI/180);
+        vy = s*Math.sin(obj.theta *Math.PI/180);
+        //console.log('Theta:', obj.theta);
+        directionKey = '';
+         break;
+       case 'p':
+         console.log("pausa");
+         break;
+         case '+':
+           directionKey = '';
+     }
+
+   }
+   
+
+  //console.log("Rot: ", obj.theta);
+  //console.log('Vel:', vx, vy);
  
  
    obj.pos = vec2(x, y);
