@@ -8,7 +8,7 @@ tela que serão evitados pelos peixes.
 
 Horas de trabalho: 
  * semanal - feito em uma semana apenas;
- * total -
+ * total - 6 + 5 
 
 Dificuldades: a primeira dificuldade que tive foi como modelar
 as alterações de velocidade. Primeiramente pensava que teclas
@@ -21,6 +21,7 @@ direita e 'left' como girar para a esquerda. Também acidental-
 mente usei a função 'atan2' na ordem errada (o que atrasou meu
 processo de desenvolvimento).
 
-Bugs:
+Bugs: quando nos cantos da tela, às vezes os peixes não conse-
+guem dispersar e acabam colidindo com o peixe grande.
 
 Opcionais:

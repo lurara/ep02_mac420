@@ -19,6 +19,8 @@
  var gl;
  var gCanvas;
  var gShader = {};  // encapsula globais do shader
+ var num_peixes = 1;
+ var jogo_estate = true;
  
  // cria a matriz de projeção - pode ser feita uma única vez
  var projection = mat4(
@@ -42,6 +44,7 @@
  
  // para usar no VAO
  var gTris = [];
+ var raio = 0.3;
 
  var gCoresTris = [];
  var gPosicoesTris = [];
@@ -63,7 +66,7 @@
   console.log("Canvas: ", gCanvas.width, gCanvas.height);
 
   //gTris.push(new Triangle(50, 50, 100, 25, 95, 25, 25, sorteieCorRGBA(), false));
-  gTris.push(new Triangle(0.5, 0.5, 0.5, 0.5, 95, 0.15, 0.15, sorteieCorRGBA(), false));
+  gTris.push(new Triangle(0.5, 0.5, 0.5, 0.5, 95, 0.1, 0.1, sorteieCorRGBA(), false));
 
   // shaders
   crieShaders();
@@ -85,36 +88,13 @@
 function callbackKeyUp(e) {
   const keyName = e.key;
   console.log(keyName);
+  directionKey = keyName;
 
   switch (keyName) {
-      case 'ArrowRight': 
-          console.log('Move para a direita.');
-          directionKey  = 'r';
-          break;
-
-      case 'ArrowLeft':
-          console.log('Move para a esquerda.');
-          directionKey  = 'l';
-          break;
-
-      case 'ArrowDown':
-          console.log('Move para baixo.');
-          directionKey  = 'd';
-          break;
-
-      case 'ArrowUp':
-          console.log('Move para cima.');
-          directionKey  = 'u';
-          break;
-      
-      case '+':
-          console.log('Cria peixe');
-          directionKey = keyName;
-          break;
-
       case 'p':
           console.log('Pause');
           directionKey = 'p';
+          jogo_estate = !jogo_estate;
           break;
   }
 
@@ -132,74 +112,80 @@ function callbackKeyUp(e) {
    gShader.trisVAO = gl.createVertexArray();
    gl.bindVertexArray(gShader.trisVAO);
  
-   // carrega dados dos quads
+   // cria buffer
    bufPosTris = gl.createBuffer();
-   gl.bindBuffer(gl.ARRAY_BUFFER, bufPosTris);
-   gl.bufferData(gl.ARRAY_BUFFER, flatten(gPosicoesTris), gl.STATIC_DRAW);
- 
-   // Associa as variáveis do shader ao buffer gPosicoes
-   var aPosTris = gl.getAttribLocation(gShader.program, "aPosition");
-   gl.vertexAttribPointer(aPosTris, 2, gl.FLOAT, false, 0, 0);
-   gl.enableVertexAttribArray(aPosTris);
-
-   // buffer de cores
    colorBufTris = gl.createBuffer();
-   gl.bindBuffer(gl.ARRAY_BUFFER, colorBufTris);
-   gl.bufferData(gl.ARRAY_BUFFER, flatten(gCoresTris), gl.STATIC_DRAW);
-   var aColorTris = gl.getAttribLocation(gShader.program, "aColor");
-   gl.vertexAttribPointer(aColorTris, 4, gl.FLOAT, false, 0, 0);
-   gl.enableVertexAttribArray(aColorTris);
- 
+
+   // carrega dados nos shaders
+   carregaShaders();
+
    // resolve os uniforms
    gShader.uMatrix = gl.getUniformLocation(gShader.program, "uMatrix");
    gl.bindVertexArray(null); // apenas boa prática
  
  };
+
+function carregaShaders() {
+  // bind 
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufPosTris);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(gPosicoesTris), gl.STATIC_DRAW);
+  // habilita atributos
+  var aPosTris = gl.getAttribLocation(gShader.program, "aPosition");
+  gl.vertexAttribPointer(aPosTris, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(aPosTris);
+  //  buffer de cores
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBufTris);
+  gl.bufferData(gl.ARRAY_BUFFER, flatten(gCoresTris), gl.STATIC_DRAW);
+  var aColorTris = gl.getAttribLocation(gShader.program, "aColor");
+  gl.vertexAttribPointer(aColorTris, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(aColorTris);
+
+}
  
  /**
   * Usa o shader para desenhar.
   * Assume que os dados já foram carregados e são estáticos.
   */
  function desenhe() {
-   // atualiza o relógio
-   if(directionKey == '+') {
-    //gTris.push(new Triangle(50, 50, 100, 25, 95, 25, 25, sorteieCorRGBA(), false));
-    gTris.push(new Triangle(0.1, 0.3, 0.5, 0.5, 95, 0.15, 0.15, sorteieCorRGBA(), false));
-     // carrega buffer
-     gl.bindBuffer(gl.ARRAY_BUFFER, bufPosTris);
-     gl.bufferData(gl.ARRAY_BUFFER, flatten(gPosicoesTris), gl.STATIC_DRAW);
-     // habilita atributos
-     var aPosTris = gl.getAttribLocation(gShader.program, "aPosition");
-     gl.vertexAttribPointer(aPosTris, 2, gl.FLOAT, false, 0, 0);
-     gl.enableVertexAttribArray(aPosTris);
-     //  buffer de cores
-     gl.bindBuffer(gl.ARRAY_BUFFER, bufPosTris);
-     gl.bufferData(gl.ARRAY_BUFFER, flatten(gCoresTris), gl.STATIC_DRAW);
-     var aColorTris = gl.getAttribLocation(gShader.program, "aColor");
-     gl.vertexAttribPointer(aColorTris, 4, gl.FLOAT, false, 0, 0);
-     gl.enableVertexAttribArray(aColorTris);
 
-     // resolve os uniforms
-     gShader.uMatrix = gl.getUniformLocation(gShader.program, "uMatrix");
-     gl.bindVertexArray(null); // apenas boa prática
+   if (directionKey == '+') {
 
-     console.log("CRIADO");
+     gTris.push(new Triangle(0.1, 0.3, 0.5, 0.5, 95, 0.05, 0.05, sorteieCorRGBA(), false));
+     carregaShaders();
+     num_peixes++;
+     directionKey = '';
+
    }
+   else if (directionKey == '-') {
+     if(num_peixes != 1) {
+      gTris.pop();
+
+      for (let i = 0; i < 3; i++) {
+        gPosicoesTris.pop();
+        gCoresTris.pop();
+      }
+
+      num_peixes--;
+      carregaShaders();
+      directionKey = '';
+
+     }
+   }
+
    let now = Date.now();
-   let delta = (now - gUltimoT) / 1000;
-   gUltimoT = now;
- 
-   // limpa o canvas
-   gl.clear(gl.COLOR_BUFFER_BIT);
- 
-   desenheTris(delta, projection);
-   if(directionKey != 'p') {
-    //console.log('aa')
+   let delta;
+
+   // jogo parado ou não
+   if (jogo_estate) 
+     delta = (now - gUltimoT) / 1000;
+   else delta = 0;
+
+    gUltimoT = now;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    desenheTris(delta, projection);
+
     window.requestAnimationFrame(desenhe);
-   }
-   else 
-    console.log("PAUSA");
- 
+
  }
 
  function desenheTris(delta, projection) {
@@ -207,16 +193,19 @@ function callbackKeyUp(e) {
   gl.bindVertexArray(gShader.trisVAO);
   for (let i = 0; i < gTris.length; i++) {
     let obj = gTris[i];
-    atualize(obj, delta);
+    atualize(obj, delta, i);
 
     // Calcula a matriz modelView
     var modelView = translate(obj.pos[0], obj.pos[1], 0);
     modelView = mult(modelView, rotateZ(obj.theta));  // esta linha rotaciona o bgl
     modelView = mult(modelView, scale(obj.sx, obj.sy, 1));
+
     // combina projection e modelveiw
     var uMatrix = mult(projection, modelView);
+
     // carrega na GPU
     gl.uniformMatrix4fv(gShader.uMatrix, false, flatten(uMatrix));
+
     // desenhe
     gl.drawArrays(gl.TRIANGLES, 3 * i, 3);
   }
@@ -293,6 +282,8 @@ function callbackKeyUp(e) {
     gPosicoesTris.push(vt[i]);
     gPosicoesTris.push(vt[j]);
     gPosicoesTris.push(vt[k]);
+
+    console.log(gPosicoesTris);
   
     if (colorido) cor = sorteieCorRGBA();
     gCoresTris.push(cor);
@@ -307,77 +298,199 @@ function callbackKeyUp(e) {
    return s;
  }
 
+
  /**
   * atualiza a posição dos vertices de um objeto
   * @param {obj} obj - disco ou quad
   * @param {Number} delta - intervalo de tempo desde a ultima atualização
   */
- function atualize(obj, delta) {
-   obj.pos = add(obj.pos, mult(delta, obj.vel));
+ function atualize(obj, delta, indice) {
+   //obj.pos = add(obj.pos, mult(delta, obj.vel));
    let x, y;
    let vx, vy;
    [x, y] = obj.pos;
    [vx, vy] = obj.vel;
-   //obj.theta = (obj.theta + obj.vrz * delta) % (360);
-   //console.log("Rot: ", obj.theta);
- 
-   if (x < -1) { x = -1; vx = -vx; obj.vrz *= -1 };
-   if (y < -1) { y = -1; vy = -vy; obj.vrz *= -1 };
-   if (x >= 1) { x = 1; vx = -vx; obj.vrz *= -1 };
-   if (y >= 1) { y = 1; vy = -vy; obj.vrz *= -1 };
+   let s;
+   
+  // Mudanças nos boids --------------------------
+  if(true) { // peixe não lider
+    let algn_x = 0, algn_y = 0;
+    let sep_x = 0, sep_y = 0;
+    let coh_x = 0, coh_y = 0;
+    let count = 0;
 
+    if(gTris.length > 1) {
+      [algn_x, algn_y, count] = align(gTris, obj, indice);
+      algn_x -= vx; algn_y -= vy;
+      [sep_x, sep_y] = separate(gTris, obj, indice);
+      [coh_x, coh_y] = cohere(gTris, obj, indice);
+    }
+
+    vx += coh_x/100 + algn_x/10 + sep_x/25;
+    vy += coh_y/100 + algn_y/10 + sep_y/25;
+    console.log(vx, vy);
+  }
+  
+   // Controle do peixe ----------------------------
    obj.theta = Math.atan2(vy,vx) * 180/Math.PI;
 
-   let s;
+   if (!jogo_estate)
+    console.log("em pausa");
 
-   if(directionKey != '') {
+   else if (directionKey != '') {
      switch(directionKey) {
-       case 'u':
-         vy += (0.1)*vy;
-         vx += (0.1)*vx;
-
-     directionKey = '';
+       case 'ArrowUp':
+          vy += (0.3)*vy;
+          vx += (0.3)*vx;
          break;
 
-       case 'd':
-         vy -= (0.1)*vy;
-         vx -= (0.1)*vx;
-         directionKey = '';
+       case 'ArrowDown':
+         vy -= (0.3)*vy;
+         vx -= (0.3)*vx;
          break;
 
-       case 'l': 
+       case 'ArrowLeft': 
         s = velEscalar(vx, vy);
-        obj.theta = obj.theta + 10;
+        obj.theta = obj.theta + 20;
         vx = s*Math.cos(obj.theta *Math.PI/180);
         vy = s*Math.sin(obj.theta *Math.PI/180); 
-        //console.log('Vel:', vx, vy);
-        //console.log('Theta:', obj.theta);
-        directionKey = '';
          break;
 
-       case 'r':
+       case 'ArrowRight':
         s = velEscalar(vx, vy);
-        obj.theta = obj.theta - 10; 
+        obj.theta = obj.theta - 20; 
         vx = s*Math.cos(obj.theta *Math.PI/180);
         vy = s*Math.sin(obj.theta *Math.PI/180);
-        //console.log('Theta:', obj.theta);
-        directionKey = '';
          break;
-       case 'p':
-         console.log("pausa");
-         break;
-         case '+':
-           directionKey = '';
+
      }
 
-   }
-   
+     directionKey = '';
 
-  //console.log("Rot: ", obj.theta);
-  //console.log('Vel:', vx, vy);
- 
- 
+   }
+
+  // Limite de tela ---------------------------------------
+  if (x < -1) { x = -1; vx = -vx; obj.vrz *= -1 };
+  if (y < -1) { y = -1; vy = -vy; obj.vrz *= -1 };
+  if (x >= 1) { x =  1; vx = -vx; obj.vrz *= -1 };
+  if (y >= 1) { y =  1; vy = -vy; obj.vrz *= -1 };
+
+  // Limite de velocidade ---------------------------------
+/*   if(velEscalar(vx, vy) > 5) {
+    vx = 
+  } */
+
    obj.pos = vec2(x, y);
    obj.vel = vec2(vx, vy);
+   obj.pos = add(obj.pos, mult(delta, obj.vel));
+
  };
- 
+
+ /**
+  * atualiza a posição dos vertices de um objeto
+  * @param {Number} x - posicao x do primeiro corpo
+  * @param {Number} y - posicao y do primeiro corpo
+  * @param {Number} x_other - posicao x do segundo corpo
+  * @param {Number} y_other - posicao y do segundo corpo
+  */
+ function dist(x, y, x_other, y_other) {
+   return Math.sqrt(Math.abs((x-x_other)*(x-x_other) + (y-y_other)*(y-y_other)));
+ }
+
+ function separate(gTris, obj, indice) {
+   let x, y;
+   let x_other, y_other;
+   let sum_x = 0;
+   let sum_y = 0;
+   let distance;
+
+   [x, y] = obj.pos;
+   
+   for(let i = 0; i < gTris.length; i++) {
+    if(i != indice) {
+
+      [x_other, y_other] = gTris[i].pos;
+      distance = dist(x, y, x_other, y_other);
+      //console.log('dist:', dist);
+
+      if (distance < 0.15) {
+        // inversamente proporcional à distancia
+        sum_x += ((x - x_other)/distance);
+        sum_y += ((y - y_other)/distance); 
+      }
+    }
+  }
+
+  return [sum_x, sum_y];
+
+ }
+
+ function align(gTris, obj, indice) {
+   /* calcula vel media de todos peixes */
+   let sum_vx = 0;
+   let sum_vy = 0;
+   let vx, vy;
+   let x, y;
+   let distance;
+   let count = 0;
+
+   for(let i = 0; i < gTris.length; i++) {
+     if(i != indice) {
+
+        [x, y] = gTris[i].pos;
+        distance = dist(obj.pos[0], obj.pos[1], x, y);
+
+        if(distance < 0.5) {
+          [vx, vy] = gTris[i].vel;
+          sum_vx += vx;
+          sum_vy += vy;
+          count++;
+        }
+     }
+   }
+
+   if(count) {
+    sum_vx /= count;
+    sum_vy /= count;
+   }
+
+   return [sum_vx, sum_vy, count];
+ }
+
+ function cohere(gTris, obj, indice) {
+   let sum_x = 0;
+   let sum_y = 0;
+   let peso = 0;
+   let peso_total = 0;
+   let distance;
+   let x, y;
+
+   for(let i = 0; i < gTris.length; i++) {
+    if(i != indice) {
+
+      [x, y] = gTris[i].pos;
+      distance = dist(obj.pos[0], obj.pos[1], x, y);
+
+      if(distance < 100) {
+        peso = gTris[i].sx;
+        peso_total += peso;
+        sum_x += peso*x;
+        sum_y += peso*y;
+      }
+
+    }
+  }
+
+  //sum_x /= gTris.length-1;
+  //sum_y /= gTris.length-1;
+  if(!peso_total)
+    return [0, 0];
+
+  sum_x /= peso_total;
+  sum_y /= peso_total;
+
+  [x, y] = obj.pos;
+
+  return [(sum_x-x), (sum_y-y)];
+
+ }
