@@ -1,14 +1,14 @@
 Introdução: Este projeto trata-se da implementação do Exercício
 Programa 02 da disciplina MAC0420. Nele, foi desenvolvido um 
 programa que simula o comportamento de 'Boids', i.e. cardumes de
-peixes. Existe um peixe líder que é instanciado no começo da 
-simulação. Ele é seguido pelos outros peixes que são criados a
-partir da interação do usuário. Existem, também, obstáculos na
-tela que serão evitados pelos peixes.
+peixes. Existe um peixe líder (rosa) que é instanciado no começo
+da simulação. Ele é seguido pelos outros peixes (azul) que são 
+criados a partir da interação do usuário. Existem, também, obs-
+táculos na tela que serão evitados pelos peixes.
 
 Horas de trabalho: 
  * semanal - feito em uma semana apenas;
- * total - 6 + 5 
+ * total - 16 horas aproximadamente
 
 Dificuldades: a primeira dificuldade que tive foi como modelar
 as alterações de velocidade. Primeiramente pensava que teclas
@@ -19,9 +19,12 @@ trolar o peixe lider. Dessa forma, modelei 'up' como intensifi-
 car a velocidade, 'down' como frear, 'right' como girar para a
 direita e 'left' como girar para a esquerda. Também acidental-
 mente usei a função 'atan2' na ordem errada (o que atrasou meu
-processo de desenvolvimento).
+processo de desenvolvimento). Também tive dificuldade em imple-
+mentar as forças que atuam sobre os boid (a priori, desenvolver
+a ideia geral foi rápido, mas resolver bugs etc. demorou um pou-
+co mais). 
 
-Bugs: quando nos cantos da tela, às vezes os peixes não conse-
-guem dispersar e acabam colidindo com o peixe grande.
+Bugs: ocasionalmente os peixes não conseguem dispersar e acabam
+colidindo; ou acabam se dispersando.
 
-Opcionais:
+Opcionais: não implementei opcionais. :(
